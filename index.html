@@ -13,12 +13,8 @@
 </head>
 <body>
 
-  <!-- GAME CANVAS -->
   <canvas id="gameCanvas"></canvas>
 
-  <!-- ═══════════════════════════════════════
-       TITLE SCREEN
-  ═══════════════════════════════════════ -->
   <div id="title-screen">
     <div id="title-bg"></div>
     <div id="title-rain"></div>
@@ -26,107 +22,67 @@
     <div id="title-content">
       <div class="title-eyebrow">SUPER</div>
       <div class="title-main">
-        <span class="tl">M</span><span class="tl">A</span><span class="tl">J</span><span class="tl">Z</span><span class="tl">I</span><span class="tl">E</span>
+        <span class="tl">M</span><span class="tl">A</span><span class="tl">J</span><span class="tl">Z</span><span class="tl">I</span><span class="tl">E</span> 
         <br>
         <span class="tl">M</span><span class="tl">O</span>
       </div>
-      <div class="title-tagline">Streets Don't Sleep &bull; Neither Does She</div>
-
-      <button id="start-btn" class="btn-primary">
-        <span class="btn-icon">▶</span>
-        <span>START GAME</span>
-      </button>
-
-      <div class="controls-legend" id="controls-legend">
-        <span>← → MOVE</span>
-        <span>↑ JUMP</span>
-        <span>Z PUNCH</span>
-        <span>X KICK</span>
-        <span>C SPECIAL</span>
-        <span>P PAUSE</span>
-      </div>
-    </div>
-
-    <!-- Animated fire glow at base -->
-    <div id="title-fire"></div>
-  </div>
-
-  <!-- ═══════════════════════════════════════
-       HUD (in-game)
-  ═══════════════════════════════════════ -->
-  <div id="hud">
-    <div class="hud-left">
-      <div class="hud-label">MAJZIE MO</div>
-      <div class="health-track">
-        <div id="health-bar"></div>
-        <span id="hp-text">100</span>
-      </div>
-      <div id="lives-row"></div>
-    </div>
-
-    <div class="hud-center">
-      <div class="hud-label" id="level-label">LEVEL 1</div>
-      <div id="combo-display"></div>
-    </div>
-
-    <div class="hud-right">
-      <div class="hud-label">SCORE</div>
-      <div id="score-display">000000</div>
+      <button class="btn-primary" id="start-btn">ENTER WARRIOR</button>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       PAUSE SCREEN
-  ═══════════════════════════════════════ -->
-  <div id="pause-screen" class="overlay-screen" style="display:none;">
-    <div class="overlay-card">
+  <div id="hud" style="display:none;">
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="health-wrap">
+          <div class="health-bg"><div id="health-bar"></div></div>
+          <div class="lives-count" id="lives-display">❤❤❤</div>
+        </div>
+        <div class="score-wrap">
+          <div id="score-val">000000</div>
+          <div id="best-val">BEST: 0</div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div id="level-display">LEVEL 1</div>
+        <div id="kill-progress">ENEMIES: 0 / 8</div>
+      </div>
+    </div>
+    <div id="combo-ui" style="display:none;"><span id="combo-num">2</span>x COMBO</div>
+  </div>
+
+  <div class="overlay" id="pause-overlay" style="display:none;">
+    <div class="overlay-box">
       <div class="overlay-title">PAUSED</div>
       <button class="btn-primary" id="resume-btn">RESUME</button>
-      <button class="btn-secondary" id="quit-btn">QUIT</button>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       GAME OVER SCREEN
-  ═══════════════════════════════════════ -->
-  <div id="gameover-screen" class="overlay-screen" style="display:none;">
-    <div class="overlay-card">
-      <div class="overlay-eyebrow">GAME</div>
-      <div class="overlay-title over-red">OVER</div>
-      <div class="overlay-sub" id="go-score">SCORE: 000000</div>
-      <div class="overlay-sub" id="go-best">BEST: 000000</div>
+  <div class="overlay" id="dead-overlay" style="display:none;">
+    <div class="overlay-box">
+      <div class="overlay-title color-blood">WASTED</div>
+      <div class="overlay-sub" id="final-score">SCORE: 0</div>
       <button class="btn-primary" id="retry-btn">TRY AGAIN</button>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       LEVEL CLEAR SCREEN
-  ═══════════════════════════════════════ -->
-  <div id="levelclear-screen" class="overlay-screen" style="display:none;">
-    <div class="overlay-card">
-      <div class="overlay-eyebrow">STAGE</div>
-      <div class="overlay-title over-gold">CLEAR!</div>
+  <div class="overlay" id="clear-overlay" style="display:none;">
+    <div class="overlay-box">
+      <div class="overlay-title color-gold">LEVEL CLEAR</div>
       <div class="overlay-sub" id="lc-bonus">BONUS +5000</div>
       <button class="btn-primary" id="nextlevel-btn">NEXT LEVEL</button>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       MOBILE CONTROLS
-  ═══════════════════════════════════════ -->
   <div id="mobile-controls">
-    <!-- PAUSE button top-right -->
     <button id="pause-btn" class="ctrl-pause" aria-label="Pause">⏸</button>
 
     <div class="ctrl-row">
-      <!-- D-pad -->
       <div class="dpad">
+        <button class="ctrl-btn dpad-up"    data-key="ArrowUp"    aria-label="Jump">▲</button>
         <button class="ctrl-btn dpad-left"  data-key="ArrowLeft"  aria-label="Left">◀</button>
         <button class="ctrl-btn dpad-right" data-key="ArrowRight" aria-label="Right">▶</button>
-        <button class="ctrl-btn dpad-up"    data-key="ArrowUp"    aria-label="Jump">▲</button>
       </div>
 
-      <!-- Action buttons -->
       <div class="actions">
         <div class="ctrl-wrap">
           <button class="ctrl-btn act-special" data-key="KeyC" aria-label="Special">⚡</button>
