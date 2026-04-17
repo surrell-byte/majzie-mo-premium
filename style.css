@@ -1,180 +1,166 @@
-/* Import high-energy arcade fonts */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Russo+One&family=Oswald:wght@700&display=swap');
+/* --- 1. GLOBAL RESET & MOBILE OPTIMIZATION --- */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Russo+One&display=swap');
 
 * {
-    -webkit-touch-callout: none; /* Prevents long-press menu on mobile */
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    touch-action: none; /* Prevents browser zooming/scrolling */
-    -webkit-tap-highlight-color: transparent; /* Removes gray tap box on iOS */
-    outline: none;
-    box-sizing: border-box;
+  -webkit-touch-callout: none; /* Prevents long-press menu */
+  -webkit-user-select: none;   /* Prevents text selection */
+  user-select: none;
+  touch-action: none;         /* Disables browser zoom/scroll gestures */
+  -webkit-tap-highlight-color: transparent; /* Removes gray box on tap */
+  outline: none;
+  box-sizing: border-box;
 }
 
-body {
-    background: #000;
-    overflow: hidden;
-    font-family: 'Russo One', sans-serif;
-    margin: 0;
-    padding: 0;
-    /* Uses 'Small Viewport Height' to stay perfectly fit on iOS Safari */
-    height: 100svh;
-    width: 100vw;
+body, html {
+  background: #000;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100svh; /* Small Viewport Height for iOS Safari */
+  overflow: hidden;
+  position: fixed; /* Absolute lock to prevent "bounce" scrolling */
 }
 
 canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    /* 'Cover' ensures the game world fills the screen without black bars */
-    object-fit: cover;
-    background: #000;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* World fills screen perfectly */
 }
 
-/* --- TITLE SCREEN --- */
+/* --- 2. TITLE SCREEN (FIXED LAYOUT) --- */
 #title-screen {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    transition: opacity 0.8s ease;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Centers everything vertically & horizontally */
+  z-index: 100;
+  background: #000;
+  transition: opacity 0.8s ease;
+  padding: 20px;
 }
 
 #title-bg {
-    position: absolute;
-    inset: 0;
-    /* Gradient overlay + your poster image */
-    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)),
-                url('./assets/bg/poster.jpg') center center / cover no-repeat;
-    z-index: -1;
+  position: absolute;
+  inset: 0;
+  /* Darker gradient for better text contrast */
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.85)),
+              url('./assets/bg/poster.jpg') center center / cover no-repeat;
+  z-index: -1;
 }
 
 .title-main {
-    font-family: 'Bebas Neue', sans-serif;
-    color: #fff;
-    font-size: clamp(60px, 18vw, 150px);
-    line-height: 0.85;
-    text-align: center;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 5px 5px 0px #ff4500;
-    margin-bottom: 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  color: #fff;
+  /* clamp prevents overlap: min 50px, scale 15vw, max 120px */
+  font-size: clamp(50px, 15vw, 120px); 
+  line-height: 0.9;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 4px 4px 0px #ff4500;
+  margin-bottom: 40px;
+  text-transform: uppercase;
 }
 
-.title-main span {
-    display: inline-block;
-}
-
-/* --- START BUTTON --- */
 #start-btn {
-    padding: 15px 40px;
-    font-size: 24px;
-    font-family: 'Russo One', sans-serif;
-    background: #FFD700;
-    border: none;
-    color: #000;
-    cursor: pointer;
-    border-radius: 5px;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-    transition: transform 0.2s, background 0.2s;
-    z-index: 101;
+  padding: 16px 45px;
+  font-family: 'Russo One', sans-serif;
+  font-size: 24px;
+  background: #FFD700;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+  transition: transform 0.1s, background 0.1s;
 }
 
 #start-btn:active {
-    transform: scale(0.95);
-    background: #fff;
+  transform: scale(0.92);
+  background: #fff;
 }
 
-/* --- HUD (Health & UI) --- */
+/* --- 3. HUD (TOP LAYER) --- */
 #hud {
-    position: fixed;
-    top: env(safe-area-inset-top, 20px);
-    left: env(safe-area-inset-left, 20px);
-    z-index: 10;
-    pointer-events: none;
+  position: fixed;
+  /* Uses iPhone Safe Area for the notch */
+  top: env(safe-area-inset-top, 20px);
+  left: env(safe-area-inset-left, 20px);
+  z-index: 10;
+  pointer-events: none;
 }
 
 .health-container {
-    width: 250px;
-    height: 25px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid #fff;
-    border-radius: 12px;
-    overflow: hidden;
+  width: 220px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid #fff;
+  border-radius: 11px;
+  overflow: hidden;
 }
 
 #health-bar {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to right, #ff4e50, #f9d423);
-    transition: width 0.3s ease;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff416c, #ff4b2b, #f9d423);
+  transition: width 0.3s ease;
 }
 
-/* --- MOBILE CONTROLS --- */
+#score-display {
+  color: #fff;
+  font-size: 18px;
+  margin-top: 8px;
+  text-shadow: 2px 2px #000;
+}
+
+/* --- 4. MOBILE CONTROLS (SAFE AREA FIXED) --- */
 #mobile-controls {
-    position: fixed;
-    bottom: env(safe-area-inset-bottom, 20px);
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 40px;
-    z-index: 1000;
-    pointer-events: none; /* Prevents controls container from blocking screen */
+  position: fixed;
+  /* Respects the iPhone home swipe bar */
+  bottom: env(safe-area-inset-bottom, 25px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 50px;
+  z-index: 1000;
+  pointer-events: none;
 }
 
-#mobile-controls .dpad, 
-#mobile-controls .actions {
-    display: flex;
-    gap: 15px;
-    pointer-events: auto; /* Re-enables interaction for the buttons only */
+.dpad, .actions {
+  display: flex;
+  gap: 15px;
+  pointer-events: auto; /* Buttons are clickable, the container is not */
 }
 
 #mobile-controls button {
-    width: 75px;
-    height: 75px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.4);
-    border-radius: 50%;
-    color: #FFD700;
-    font-size: 32px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.05s, background 0.05s;
+  width: 72px;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  border-radius: 50%;
+  color: #FFD700;
+  font-size: 30px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.05s ease;
 }
 
-/* This creates the "Arcade Button" click feel */
+/* Tactile feedback for mobile buttons */
 #mobile-controls button:active {
-    transform: scale(0.85) translateY(4px);
-    background: rgba(255, 69, 0, 0.5);
-    border-color: #fff;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  transform: scale(0.85) translateY(6px);
+  background: rgba(255, 69, 0, 0.5);
+  border-color: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
-/* --- RESPONSIVE LAYOUT FIXES --- */
-
-/* For phones in Portrait mode (if they don't rotate) */
-@media (orientation: portrait) {
-    #mobile-controls {
-        flex-direction: column;
-        align-items: center;
-        bottom: 50px;
-        gap: 20px;
-    }
-    .title-main { font-size: 15vw; }
-}
-
-/* For phones in Landscape (The intended way to play) */
+/* Landscape optimization to prevent buttons hitting edges */
 @media (orientation: landscape) {
-    #mobile-controls {
-        padding: 0 80px; /* Moves buttons away from screen edges/notch */
-    }
+  #mobile-controls {
+    padding: 0 80px;
+  }
 }

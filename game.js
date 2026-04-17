@@ -1,20 +1,31 @@
 'use strict';
 
+/**
+ * SUPER MAJZIE MO - GAME ENGINE
+ * Logic: Movement, Combat, Enemy AI, and Mobile Touch Events
+ */
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // --- GAME STATE ---
 let W, H;
-let gameState = 'title'; // title, playing, gameover
+let gameState = 'title'; // 'title' or 'playing'
 let paused = false;
 let frameCount = 0;
 let score = 0;
-let bgScroll = 0;
+const keys = {};
+const enemies = [];
+const effects = [];
 
-// --- PLAYER SETTINGS ---
+// --- PLAYER OBJECT ---
 const player = {
-  x: 100, y: 0, w: 60, h: 100,
-  vx: 0, vy: 0,
+  x: 100,
+  y: 0,
+  w: 60,
+  h: 100,
+  vx: 0,
+  vy: 0,
   speed: 5,
   health: 100,
   maxHealth: 100,
@@ -25,18 +36,15 @@ const player = {
   facing: 1 // 1 for right, -1 for left
 };
 
-const keys = {};
-const enemies = [];
-const effects = [];
-const enemiesPerLevel = 5;
-let enemiesSpawned = 0;
-
 // --- INITIALIZATION ---
 function init() {
   resize();
   window.addEventListener('resize', resize);
-  // Initial setup: Player starts on the floor
-  player.y = H - player.h - 50;
+  // Place player on ground initially
+  player.y = H - 150;
+  
+  // Attach Button Listeners
+  setupControls();
 }
 
 function resize() {
@@ -44,12 +52,11 @@ function resize() {
   H = window.innerHeight;
   canvas.width = W;
   canvas.height = H;
-  
-  // Safety: Reposition player if they are off screen after resize
-  if (player.y > H) player.y = H - player.h - 50;
+  // Prevent player from falling through the floor on resize
+  if (player.y > H - 150) player.y = H - 150;
 }
 
-// --- CORE GAME ENGINE ---
+// --- ENGINE LOOP ---
 function gameLoop() {
   if (gameState !== 'playing' || paused) {
     if (paused) drawPauseScreen();
@@ -60,24 +67,14 @@ function gameLoop() {
   frameCount++;
   ctx.clearRect(0, 0, W, H);
 
-  // 1. Update
-  updateBackground();
-  updatePlayer();
-  updateEnemies();
-  updateEffects();
-
-  // 2. Draw
-  drawBackground();
-  drawEnemies();
-  drawPlayer();
-  drawEffects();
-  drawUI();
+  update();
+  draw();
 
   requestAnimationFrame(gameLoop);
 }
 
-// --- LOGIC FUNCTIONS ---
-function updatePlayer() {
+// --- UPDATE LOGIC ---
+function update() {
   // Horizontal Movement
   if (keys['ArrowLeft'] || keys['a']) {
     player.vx = -player.speed;
@@ -88,117 +85,102 @@ function updatePlayer() {
   } else {
     player.vx *= 0.8;
   }
-
   player.x += player.vx;
 
-  // Jump & Gravity
-  if (!player.grounded) {
-    player.vy += 0.8; // Gravity
-  }
+  // Gravity & Jump
+  player.vy += 0.8;
   player.y += player.vy;
 
   // Floor Collision
-  const floorY = H - 50;
-  if (player.y + player.h > floorY) {
-    player.y = floorY - player.h;
+  if (player.y > H - 150) {
+    player.y = H - 150;
     player.vy = 0;
     player.grounded = true;
   }
 
-  // Attack Animation Logic
+  // Attack Animation
   if (player.attacking) {
     player.attackFrame++;
-    if (player.attackFrame > 20) {
+    if (player.attackFrame > 15) {
       player.attacking = false;
       player.attackFrame = 0;
-      player.attackType = null;
     }
   }
 
-  // Bound player to screen
+  // Screen Bounds
   if (player.x < 0) player.x = 0;
-  if (player.x + player.w > W) player.x = W - player.w;
+  if (player.x > W - player.w) player.x = W - player.w;
+
+  updateEnemies();
+  updateEffects();
 }
 
-function updateBackground() {
-  if (Math.abs(player.vx) > 0.1) {
-    bgScroll -= player.vx * 0.5;
-  }
-}
-
-function spawnEnemy() {
-  if (enemiesSpawned >= enemiesPerLevel) return;
-  enemies.push({
-    x: W + 50,
-    y: H - 150,
-    w: 60, h: 100,
-    health: 50,
-    speed: 2 + Math.random() * 2
-  });
-  enemiesSpawned++;
-}
-
-function updateEnemies() {
-  if (frameCount % 120 === 0) spawnEnemy();
-
-  enemies.forEach((en, index) => {
-    // Basic AI: Move toward player
-    const dist = player.x - en.x;
-    en.x += Math.sign(dist) * en.speed;
-
-    // Check if player hit enemy
-    if (player.attacking && player.attackFrame === 10) {
-      if (Math.abs(player.x - en.x) < 100 && Math.abs(player.y - en.y) < 50) {
-        en.health -= 25;
-        createHitEffect(en.x, en.y);
-      }
-    }
-
-    if (en.health <= 0) {
-      enemies.splice(index, 1);
-      score += 100;
-    }
-  });
-}
-
-// --- VISUALS ---
-function drawBackground() {
-  ctx.fillStyle = '#111';
-  ctx.fillRect(0, 0, W, H);
-  
-  // Simple Parallax floor
-  ctx.fillStyle = '#333';
+// --- RENDER LOGIC ---
+function draw() {
+  // Floor
+  ctx.fillStyle = '#222';
   ctx.fillRect(0, H - 50, W, 50);
+
+  // Player
+  ctx.save();
+  ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
+  ctx.scale(player.facing, 1);
+  ctx.fillStyle = player.attacking ? '#FFD700' : '#00AAFF';
+  ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
+  
+  // Basic Hitbox for Attack
+  if (player.attacking && player.attackFrame > 5) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillRect(20, -10, 40, 20);
+  }
+  ctx.restore();
+
+  drawEnemies();
+  drawEffects();
+  updateHUD();
 }
 
-function drawPlayer() {
-  ctx.save();
-  ctx.translate(player.x + player.w/2, player.y + player.h/2);
-  ctx.scale(player.facing, 1);
-  
-  // Body
-  ctx.fillStyle = player.attacking ? '#ff0' : '#0af';
-  ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
-  
-  // Arm/Weapon if attacking
-  if (player.attacking) {
-    ctx.fillStyle = '#fff';
-    const ext = player.attackFrame * 2;
-    ctx.fillRect(20, -10, ext > 40 ? 40 : ext, 10);
+function updateHUD() {
+  const bar = document.getElementById('health-bar');
+  if (bar) bar.style.width = player.health + '%';
+  const scoreDisp = document.getElementById('score-display');
+  if (scoreDisp) scoreDisp.innerText = `SCORE: ${score}`;
+}
+
+function drawPauseScreen() {
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fff';
+  ctx.font = '40px Russo One';
+  ctx.textAlign = 'center';
+  ctx.fillText('PAUSED', W / 2, H / 2);
+}
+
+// --- ENEMIES & EFFECTS ---
+function updateEnemies() {
+  if (frameCount % 120 === 0) {
+    enemies.push({ x: W + 50, y: H - 150, w: 60, h: 100, health: 50, speed: 2 });
   }
-  
-  ctx.restore();
+
+  enemies.forEach((en, i) => {
+    en.x -= en.speed;
+    // Collision check
+    if (player.attacking && Math.abs(player.x - en.x) < 80) {
+      en.health -= 5;
+      effects.push({ x: en.x, y: en.y, life: 10 });
+    }
+    if (en.health <= 0 || en.x < -100) {
+      enemies.splice(i, 1);
+      if (en.health <= 0) score += 100;
+    }
+  });
 }
 
 function drawEnemies() {
   enemies.forEach(en => {
-    ctx.fillStyle = '#f44';
+    ctx.fillStyle = '#FF4500';
     ctx.fillRect(en.x, en.y, en.w, en.h);
   });
-}
-
-function createHitEffect(x, y) {
-  effects.push({ x, y, life: 20 });
 }
 
 function updateEffects() {
@@ -210,94 +192,63 @@ function updateEffects() {
 
 function drawEffects() {
   effects.forEach(eff => {
-    ctx.fillStyle = 'rgba(255, 255, 255, ' + (eff.life / 20) + ')';
+    ctx.fillStyle = 'white';
     ctx.beginPath();
-    ctx.arc(eff.x, eff.y, 30, 0, Math.PI * 2);
+    ctx.arc(eff.x, eff.y, 20, 0, Math.PI * 2);
     ctx.fill();
   });
 }
 
-function drawUI() {
-  document.getElementById('health-bar').style.width = player.health + '%';
-}
-
-function drawPauseScreen() {
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#fff';
-  ctx.font = '40px Russo One';
-  ctx.textAlign = 'center';
-  ctx.fillText('PAUSED', W/2, H/2);
-}
-
-// --- INPUT & CONTROL HANDLERS ---
-function togglePause() {
-  paused = !paused;
-}
-
-function startGame() {
-  const title = document.getElementById('title-screen');
-  title.style.opacity = '0';
-  setTimeout(() => {
-    title.style.display = 'none';
-    document.getElementById('hud').style.display = 'block';
+// --- CONTROLS & EVENT LISTENERS ---
+function setupControls() {
+  const startBtn = document.getElementById('start-btn');
+  
+  const launch = (e) => {
+    e.preventDefault();
     gameState = 'playing';
-    gameLoop();
-  }, 800);
-}
+    document.getElementById('title-screen').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('title-screen').style.display = 'none';
+      document.getElementById('hud').style.display = 'block';
+      gameLoop();
+    }, 800);
+  };
 
-// Start Button Link
-const startBtn = document.getElementById('start-btn');
-if (startBtn) {
-  startBtn.addEventListener('click', startGame);
-  startBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    startGame();
-  }, { passive: false });
-}
-
-// Keyboard Listeners
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  if (e.key === 'p' || e.key === 'P') togglePause();
-  
-  if (gameState === 'playing' && !paused) {
-    if ((e.key === 'z' || e.key === 'Z') && !player.attacking) {
-      player.attacking = true; player.attackType = 'punch'; player.attackFrame = 0;
-    }
-    if ((e.key === 'ArrowUp' || e.key === ' ') && player.grounded) {
-      player.vy = -14;
-      player.grounded = false;
-    }
+  if (startBtn) {
+    startBtn.addEventListener('click', launch);
+    startBtn.addEventListener('touchstart', launch, { passive: false });
   }
-});
 
-document.addEventListener('keyup', e => keys[e.key] = false);
-
-// Mobile Button Listeners
-document.querySelectorAll('#mobile-controls button').forEach(btn => {
-  const key = btn.getAttribute('data-key');
-  
-  btn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    keys[key] = true;
-    
+  // Keyboard
+  window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if (e.key.toLowerCase() === 'p') paused = !paused;
     if (gameState === 'playing' && !paused) {
-      if (key === 'KeyZ' && !player.attacking) {
-        player.attacking = true; player.attackType = 'punch'; player.attackFrame = 0;
-      }
-      if (key === 'ArrowUp' && player.grounded) {
-        player.vy = -14;
-        player.grounded = false;
-      }
+        if (e.key === ' ' || e.key === 'ArrowUp') {
+            if (player.grounded) { player.vy = -16; player.grounded = false; }
+        }
+        if (e.key.toLowerCase() === 'z') player.attacking = true;
     }
-  }, { passive: false });
+  });
+  window.addEventListener('keyup', e => keys[e.key] = false);
 
-  btn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    keys[key] = false;
-  }, { passive: false });
-});
+  // Mobile Controls
+  document.querySelectorAll('#mobile-controls button').forEach(btn => {
+    const key = btn.getAttribute('data-key');
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      keys[key] = true;
+      if (gameState === 'playing' && !paused) {
+        if (key === 'ArrowUp' && player.grounded) { player.vy = -16; player.grounded = false; }
+        if (key.includes('Key')) player.attacking = true;
+      }
+    }, { passive: false });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      keys[key] = false;
+    }, { passive: false });
+  });
+}
 
-// Run Init
+// --- BOOT ---
 init();
