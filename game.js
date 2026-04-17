@@ -2,7 +2,7 @@
 
 /**
  * SUPER MAJZIE MO - GAME ENGINE
- * Logic: Movement, Combat, Enemy AI, and Mobile Touch Events
+ * Final Cut Version - Optimized for iOS/Desktop
  */
 
 const canvas = document.getElementById('gameCanvas');
@@ -10,7 +10,7 @@ const ctx = canvas.getContext('2d');
 
 // --- GAME STATE ---
 let W, H;
-let gameState = 'title'; // 'title' or 'playing'
+let gameState = 'title'; 
 let paused = false;
 let frameCount = 0;
 let score = 0;
@@ -33,17 +33,17 @@ const player = {
   attacking: false,
   attackType: null,
   attackFrame: 0,
-  facing: 1 // 1 for right, -1 for left
+  facing: 1 
 };
 
 // --- INITIALIZATION ---
 function init() {
   resize();
   window.addEventListener('resize', resize);
-  // Place player on ground initially
+  
+  // Set initial player height based on screen
   player.y = H - 150;
   
-  // Attach Button Listeners
   setupControls();
 }
 
@@ -52,7 +52,6 @@ function resize() {
   H = window.innerHeight;
   canvas.width = W;
   canvas.height = H;
-  // Prevent player from falling through the floor on resize
   if (player.y > H - 150) player.y = H - 150;
 }
 
@@ -75,7 +74,7 @@ function gameLoop() {
 
 // --- UPDATE LOGIC ---
 function update() {
-  // Horizontal Movement
+  // Movement
   if (keys['ArrowLeft'] || keys['a']) {
     player.vx = -player.speed;
     player.facing = -1;
@@ -87,18 +86,18 @@ function update() {
   }
   player.x += player.vx;
 
-  // Gravity & Jump
+  // Gravity
   player.vy += 0.8;
   player.y += player.vy;
 
-  // Floor Collision
+  // Collision
   if (player.y > H - 150) {
     player.y = H - 150;
     player.vy = 0;
     player.grounded = true;
   }
 
-  // Attack Animation
+  // Animation
   if (player.attacking) {
     player.attackFrame++;
     if (player.attackFrame > 15) {
@@ -107,7 +106,7 @@ function update() {
     }
   }
 
-  // Screen Bounds
+  // Bounds
   if (player.x < 0) player.x = 0;
   if (player.x > W - player.w) player.x = W - player.w;
 
@@ -115,7 +114,7 @@ function update() {
   updateEffects();
 }
 
-// --- RENDER LOGIC ---
+// --- RENDER ---
 function draw() {
   // Floor
   ctx.fillStyle = '#222';
@@ -127,12 +126,6 @@ function draw() {
   ctx.scale(player.facing, 1);
   ctx.fillStyle = player.attacking ? '#FFD700' : '#00AAFF';
   ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
-  
-  // Basic Hitbox for Attack
-  if (player.attacking && player.attackFrame > 5) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillRect(20, -10, 40, 20);
-  }
   ctx.restore();
 
   drawEnemies();
@@ -156,15 +149,13 @@ function drawPauseScreen() {
   ctx.fillText('PAUSED', W / 2, H / 2);
 }
 
-// --- ENEMIES & EFFECTS ---
+// --- ENTITIES ---
 function updateEnemies() {
   if (frameCount % 120 === 0) {
     enemies.push({ x: W + 50, y: H - 150, w: 60, h: 100, health: 50, speed: 2 });
   }
-
   enemies.forEach((en, i) => {
     en.x -= en.speed;
-    // Collision check
     if (player.attacking && Math.abs(player.x - en.x) < 80) {
       en.health -= 5;
       effects.push({ x: en.x, y: en.y, life: 10 });
@@ -199,27 +190,33 @@ function drawEffects() {
   });
 }
 
-// --- CONTROLS & EVENT LISTENERS ---
+// --- CONTROLS ---
 function setupControls() {
   const startBtn = document.getElementById('start-btn');
   
   const launch = (e) => {
-    e.preventDefault();
-    gameState = 'playing';
-    document.getElementById('title-screen').style.opacity = '0';
+    if (e) e.preventDefault();
+    
+    // Sync with CSS
+    document.body.classList.add('playing');
+    
+    const ts = document.getElementById('title-screen');
+    ts.style.opacity = '0';
+    
     setTimeout(() => {
-      document.getElementById('title-screen').style.display = 'none';
+      ts.style.display = 'none';
       document.getElementById('hud').style.display = 'block';
+      gameState = 'playing';
       gameLoop();
     }, 800);
   };
 
   if (startBtn) {
-    startBtn.addEventListener('click', launch);
+    startBtn.onclick = launch; // Standard fallback
     startBtn.addEventListener('touchstart', launch, { passive: false });
   }
 
-  // Keyboard
+  // Input Listeners
   window.addEventListener('keydown', e => {
     keys[e.key] = true;
     if (e.key.toLowerCase() === 'p') paused = !paused;
@@ -232,7 +229,6 @@ function setupControls() {
   });
   window.addEventListener('keyup', e => keys[e.key] = false);
 
-  // Mobile Controls
   document.querySelectorAll('#mobile-controls button').forEach(btn => {
     const key = btn.getAttribute('data-key');
     btn.addEventListener('touchstart', (e) => {
@@ -250,5 +246,8 @@ function setupControls() {
   });
 }
 
-// --- BOOT ---
-init();
+// --- CRITICAL: Wait for browser to be ready ---
+window.onload = () => {
+  init();
+  console.log("Super Majzie Mo Engine: Loaded");
+};
