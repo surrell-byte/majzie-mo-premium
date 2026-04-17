@@ -2,41 +2,145 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Super Majzie Mo - Final Cut</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Super Majzie Mo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Russo+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="title-mode">
+<body>
 
+  <!-- GAME CANVAS -->
   <canvas id="gameCanvas"></canvas>
 
+  <!-- ═══════════════════════════════════════
+       TITLE SCREEN
+  ═══════════════════════════════════════ -->
   <div id="title-screen">
     <div id="title-bg"></div>
-    <div class="title-main">
-      <span>MAJZIE</span>
-      <span>MO</span>
+    <div id="title-rain"></div>
+
+    <div id="title-content">
+      <div class="title-eyebrow">SUPER</div>
+      <div class="title-main">
+        <span class="tl">M</span><span class="tl">A</span><span class="tl">J</span><span class="tl">Z</span><span class="tl">I</span><span class="tl">E</span>
+        <br>
+        <span class="tl">M</span><span class="tl">O</span>
+      </div>
+      <div class="title-tagline">Streets Don't Sleep &bull; Neither Does She</div>
+
+      <button id="start-btn" class="btn-primary">
+        <span class="btn-icon">▶</span>
+        <span>START GAME</span>
+      </button>
+
+      <div class="controls-legend" id="controls-legend">
+        <span>← → MOVE</span>
+        <span>↑ JUMP</span>
+        <span>Z PUNCH</span>
+        <span>X KICK</span>
+        <span>C SPECIAL</span>
+        <span>P PAUSE</span>
+      </div>
     </div>
-    <button id="start-btn">START GAME</button>
+
+    <!-- Animated fire glow at base -->
+    <div id="title-fire"></div>
   </div>
 
-  <div id="hud" style="display:none;">
-    <div class="health-container">
-      <div id="health-bar"></div>
+  <!-- ═══════════════════════════════════════
+       HUD (in-game)
+  ═══════════════════════════════════════ -->
+  <div id="hud">
+    <div class="hud-left">
+      <div class="hud-label">MAJZIE MO</div>
+      <div class="health-track">
+        <div id="health-bar"></div>
+        <span id="hp-text">100</span>
+      </div>
+      <div id="lives-row"></div>
     </div>
-    <div id="score-display">SCORE: 0</div>
+
+    <div class="hud-center">
+      <div class="hud-label" id="level-label">LEVEL 1</div>
+      <div id="combo-display"></div>
+    </div>
+
+    <div class="hud-right">
+      <div class="hud-label">SCORE</div>
+      <div id="score-display">000000</div>
+    </div>
   </div>
 
+  <!-- ═══════════════════════════════════════
+       PAUSE SCREEN
+  ═══════════════════════════════════════ -->
+  <div id="pause-screen" class="overlay-screen" style="display:none;">
+    <div class="overlay-card">
+      <div class="overlay-title">PAUSED</div>
+      <button class="btn-primary" id="resume-btn">RESUME</button>
+      <button class="btn-secondary" id="quit-btn">QUIT</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       GAME OVER SCREEN
+  ═══════════════════════════════════════ -->
+  <div id="gameover-screen" class="overlay-screen" style="display:none;">
+    <div class="overlay-card">
+      <div class="overlay-eyebrow">GAME</div>
+      <div class="overlay-title over-red">OVER</div>
+      <div class="overlay-sub" id="go-score">SCORE: 000000</div>
+      <div class="overlay-sub" id="go-best">BEST: 000000</div>
+      <button class="btn-primary" id="retry-btn">TRY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       LEVEL CLEAR SCREEN
+  ═══════════════════════════════════════ -->
+  <div id="levelclear-screen" class="overlay-screen" style="display:none;">
+    <div class="overlay-card">
+      <div class="overlay-eyebrow">STAGE</div>
+      <div class="overlay-title over-gold">CLEAR!</div>
+      <div class="overlay-sub" id="lc-bonus">BONUS +5000</div>
+      <button class="btn-primary" id="nextlevel-btn">NEXT LEVEL</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MOBILE CONTROLS
+  ═══════════════════════════════════════ -->
   <div id="mobile-controls">
-    <div class="dpad">
-      <button data-key="ArrowLeft" aria-label="Left">⬅️</button>
-      <button data-key="ArrowRight" aria-label="Right">➡️</button>
-      <button data-key="ArrowUp" aria-label="Jump">⬆️</button>
-    </div>
+    <!-- PAUSE button top-right -->
+    <button id="pause-btn" class="ctrl-pause" aria-label="Pause">⏸</button>
 
-    <div class="actions">
-      <button data-key="KeyZ" aria-label="Punch">👊</button>
-      <button data-key="KeyX" aria-label="Kick">💥</button>
-      <button data-key="KeyC" aria-label="Special">⚡</button>
+    <div class="ctrl-row">
+      <!-- D-pad -->
+      <div class="dpad">
+        <button class="ctrl-btn dpad-left"  data-key="ArrowLeft"  aria-label="Left">◀</button>
+        <button class="ctrl-btn dpad-right" data-key="ArrowRight" aria-label="Right">▶</button>
+        <button class="ctrl-btn dpad-up"    data-key="ArrowUp"    aria-label="Jump">▲</button>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="actions">
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn act-special" data-key="KeyC" aria-label="Special">⚡</button>
+          <span class="ctrl-label">SPECIAL</span>
+        </div>
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn act-kick"    data-key="KeyX" aria-label="Kick">💥</button>
+          <span class="ctrl-label">KICK</span>
+        </div>
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn act-punch"   data-key="KeyZ" aria-label="Punch">👊</button>
+          <span class="ctrl-label">PUNCH</span>
+        </div>
+      </div>
     </div>
   </div>
 
